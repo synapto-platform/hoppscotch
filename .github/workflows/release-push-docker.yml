@@ -1,4 +1,4 @@
-name: "Push containers to Docker Hub on release"
+name: "Push containers to GHCR on release"
 
 on:
   push:
