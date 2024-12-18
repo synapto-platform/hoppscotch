@@ -1,33 +1,20 @@
 <template>
   <div class="flex h-screen w-screen">
-    <Splitpanes class="no-splitter" :dbl-click-splitter="false" horizontal>
+    <FirebaseLogin v-if="!currentUser" />
+    <Splitpanes class="no-splitter" :dbl-click-splitter="false" horizontal v-if="currentUser">
       <Pane style="height: auto">
         <AppHeader />
       </Pane>
       <Pane :class="spacerClass" class="flex flex-1 !overflow-auto md:mb-0">
-        <Splitpanes
-          class="no-splitter"
-          :dbl-click-splitter="false"
-          :horizontal="!mdAndLarger"
-        >
-          <Pane
-            style="width: auto; height: auto"
-            class="hidden !overflow-auto md:flex md:flex-col"
-          >
+        <Splitpanes class="no-splitter" :dbl-click-splitter="false" :horizontal="!mdAndLarger">
+          <Pane style="width: auto; height: auto" class="hidden !overflow-auto md:flex md:flex-col">
             <AppSidenav />
           </Pane>
           <Pane class="flex flex-1 !overflow-auto">
-            <Splitpanes
-              class="no-splitter"
-              :dbl-click-splitter="false"
-              horizontal
-            >
+            <Splitpanes class="no-splitter" :dbl-click-splitter="false" horizontal>
               <Pane class="flex flex-1 !overflow-auto">
                 <main class="flex w-full flex-1" role="main">
-                  <RouterView
-                    v-slot="{ Component }"
-                    class="flex min-w-0 flex-1"
-                  >
+                  <RouterView v-slot="{ Component }" class="flex min-w-0 flex-1">
                     <Transition name="fade" mode="out-in" appear>
                       <component :is="Component" />
                     </Transition>
@@ -41,28 +28,17 @@
       <Pane v-if="mdAndLarger" style="height: auto">
         <AppFooter />
       </Pane>
-      <Pane
-        v-else
-        style="height: auto"
-        class="fixed inset-x-0 bottom-0 z-10 flex flex-col !overflow-auto"
-      >
+      <Pane v-else style="height: auto" class="fixed inset-x-0 bottom-0 z-10 flex flex-col !overflow-auto">
         <AppSidenav />
       </Pane>
     </Splitpanes>
     <AppActionHandler />
     <AppSpotlight :show="showSearch" @hide-modal="showSearch = false" />
-    <AppSupport
-      v-if="mdAndLarger"
-      :show="showSupport"
-      @hide-modal="showSupport = false"
-    />
+    <AppSupport v-if="mdAndLarger" :show="showSupport" @hide-modal="showSupport = false" />
     <AppOptions v-else :show="showSupport" @hide-modal="showSupport = false" />
 
     <!-- Let additional stuff be registered -->
-    <template
-      v-for="(component, index) in rootExtensionComponents"
-      :key="index"
-    >
+    <template v-for="(component, index) in rootExtensionComponents" :key="index">
       <component :is="component" />
     </template>
   </div>
@@ -79,6 +55,7 @@ import { RouterView, useRouter } from "vue-router"
 
 import { useI18n } from "~/composables/i18n"
 import { useToast } from "~/composables/toast"
+import { useReadonlyStream } from "~/composables/stream"
 import { InvocationTriggers, defineActionHandler } from "~/helpers/actions"
 import { hookKeybindingsListener } from "~/helpers/keybindings"
 import { applySetting, toggleSetting } from "~/newstore/settings"
@@ -96,6 +73,11 @@ const showSupport = ref(false)
 const expandNavigation = useSetting("EXPAND_NAVIGATION")
 const rightSidebar = useSetting("SIDEBAR")
 const columnLayout = useSetting("COLUMN_LAYOUT")
+
+const currentUser = useReadonlyStream(
+  platform.auth.getCurrentUserStream(),
+  platform.auth.getCurrentUser()
+)
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const mdAndLarger = breakpoints.greater("md")
